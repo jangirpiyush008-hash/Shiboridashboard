@@ -30,6 +30,13 @@ textarea{min-height:78px;resize:vertical}
 .sizes label{display:inline-flex;align-items:center;gap:6px;margin:0;padding:8px 14px;border:1.5px solid #e2dccb;border-radius:99px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.85rem;color:#222;background:#fffdf8}
 .sizes input{display:none}
 .sizes label.on{background:var(--charcoal);color:var(--ivory);border-color:var(--charcoal)}
+.sizeqty{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sq{display:flex;align-items:center;gap:7px;border:1.5px solid #e2dccb;border-radius:9px;padding:6px 9px;background:#fffdf8}
+.sq label{margin:0;display:flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;font-size:.85rem;color:#222;cursor:pointer;font-weight:700;min-width:36px}
+.sq input[type=checkbox]{accent-color:#c8741f;width:15px;height:15px}
+.sq .q{width:100%;padding:6px;border:1px solid #e2dccb;border-radius:6px;font-size:.82rem;background:#fff}
+.sq.off{opacity:.5}
+.sq.off .q{background:#f3efe4}
 .drop{border:2px dashed #d8cfb6;border-radius:11px;padding:18px;text-align:center;cursor:pointer;background:#fffdf8;transition:.2s;font-size:.85rem;color:#777}
 .drop:hover,.drop.drag{border-color:var(--gold);background:#fdf8ec}
 .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
@@ -56,6 +63,30 @@ textarea{min-height:78px;resize:vertical}
 .bar.show{display:block}
 .bar i{display:block;height:100%;width:0;background:var(--grad);transition:width .2s}
 .foot{text-align:center;font-size:.75rem;color:#aaa;padding:24px}
+.vbtn{background:var(--charcoal);color:var(--ivory);border:none;border-radius:99px;padding:8px 15px;font-size:.78rem;font-weight:600;cursor:pointer;transition:.2s}
+.vbtn:hover{background:var(--grad);color:#1a1310}
+.bmodal{position:fixed;inset:0;z-index:60;display:none;background:rgba(20,18,16,.6);padding:24px}
+.bmodal.open{display:flex}
+.bmodal-card{background:var(--ivory);border-radius:16px;max-width:1140px;width:100%;margin:auto;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.bmodal-head{display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid #e8e0cd;flex-wrap:wrap}
+.bmodal-head h2{font-family:var(--font-d);font-size:1.4rem;display:flex;align-items:center;gap:10px;margin:0}
+.bmodal-head input{flex:1;min-width:160px;padding:9px 13px;border:1.5px solid #e2dccb;border-radius:9px;font-family:inherit;background:#fffdf8}
+.bmodal-body{overflow:auto;padding:20px 22px}
+.bulk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.bcard{background:#fff;border:1px solid rgba(232,181,58,.3);border-radius:12px;overflow:hidden}
+.bcard .ph{aspect-ratio:3/4;background:var(--cream);position:relative}
+.bcard .ph img{width:100%;height:100%;object-fit:cover}
+.bcard .vtag2{position:absolute;top:8px;right:8px;background:rgba(20,18,16,.78);color:#fff;font-size:.6rem;padding:2px 8px;border-radius:99px}
+.bcard .cnt{position:absolute;bottom:8px;left:8px;background:rgba(20,18,16,.7);color:#fff;font-size:.62rem;padding:2px 8px;border-radius:99px}
+.bcard .b{padding:12px}
+.bcard .ct{font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--gold-deep);font-weight:600}
+.bcard h4{font-family:var(--font-b);font-size:.9rem;margin:3px 0 4px}
+.bcard .pr{font-weight:700;font-size:.9rem}
+.bcard .pr s{opacity:.45;font-weight:400;margin-left:5px;font-size:.85em}
+.bcard .mt{font-size:.72rem;color:#888;margin-top:5px}
+.bcard .st{display:inline-block;font-size:.6rem;padding:2px 8px;border-radius:99px;margin-top:7px;font-weight:600}
+.bcard .st.active{background:#e6f4ec;color:#2e8b57}.bcard .st.draft{background:#f0ece0;color:#9a8a5e}
+.bempty{text-align:center;color:#aaa;padding:50px;grid-column:1/-1}
 @media(max-width:820px){.layout{grid-template-columns:1fr}}
 </style>
 </head>
@@ -87,21 +118,28 @@ textarea{min-height:78px;resize:vertical}
         <div><label>Price ₹ <span class="req">*</span></label><input type="number" id="price" required min="0" placeholder="1899"></div>
         <div><label>Compare-at ₹ (original)</label><input type="number" id="compare" min="0" placeholder="blank if no discount"></div>
       </div>
-      <label>Sizes available</label>
-      <div class="sizes" id="sizes">
-        <label class="on"><input type="checkbox" value="XS" checked>XS</label>
-        <label class="on"><input type="checkbox" value="S" checked>S</label>
-        <label class="on"><input type="checkbox" value="M" checked>M</label>
-        <label class="on"><input type="checkbox" value="L" checked>L</label>
-        <label class="on"><input type="checkbox" value="XL" checked>XL</label>
-        <label class="on"><input type="checkbox" value="XXL" checked>XXL</label>
+      <div class="row">
+        <div><label>SKU (optional)</label><input type="text" id="sku" placeholder="e.g. SHB-INDIGO"></div>
+        <div><label>Weight (grams)</label><input type="number" id="weight" min="0" placeholder="e.g. 400"></div>
       </div>
+      <label>Sizes &amp; stock quantity</label>
+      <div class="sizeqty" id="sizes">
+        <div class="sq"><label><input type="checkbox" value="XS" checked>XS</label><input type="number" class="q" data-size="XS" value="10" min="0"></div>
+        <div class="sq"><label><input type="checkbox" value="S" checked>S</label><input type="number" class="q" data-size="S" value="10" min="0"></div>
+        <div class="sq"><label><input type="checkbox" value="M" checked>M</label><input type="number" class="q" data-size="M" value="10" min="0"></div>
+        <div class="sq"><label><input type="checkbox" value="L" checked>L</label><input type="number" class="q" data-size="L" value="10" min="0"></div>
+        <div class="sq"><label><input type="checkbox" value="XL" checked>XL</label><input type="number" class="q" data-size="XL" value="10" min="0"></div>
+        <div class="sq"><label><input type="checkbox" value="XXL" checked>XXL</label><input type="number" class="q" data-size="XXL" value="10" min="0"></div>
+      </div>
+      <div class="hint">Tick the sizes you stock; set the quantity for each.</div>
       <div class="row">
         <div><label>Colour(s)</label><input type="text" id="colors" placeholder="e.g. Indigo or Indigo, Maroon"></div>
         <div><label>Fabric</label><input type="text" id="fabric" placeholder="e.g. 100% cotton"></div>
       </div>
       <label>Care instructions</label>
       <input type="text" id="care" placeholder="e.g. Hand wash cold, do not bleach">
+      <label>Tags (optional, comma-separated)</label>
+      <input type="text" id="tags" placeholder="e.g. cotton, festive, new arrival">
       <label>Description</label>
       <textarea id="desc" placeholder="A line or two about the kurti…"></textarea>
       <label>Photos <span class="req">*</span> <span class="hint" style="display:inline">(first image = main)</span></label>
@@ -119,13 +157,27 @@ textarea{min-height:78px;resize:vertical}
 
   <!-- LIST -->
   <div class="card">
-    <div class="list-head"><h2>Saved products</h2><span class="pill" id="count">0</span></div>
+    <div class="list-head"><h2>Saved products</h2><div style="display:flex;gap:10px;align-items:center"><button class="vbtn" id="bulkBtn" type="button">▦ View all</button><span class="pill" id="count">0</span></div></div>
     <div class="sub">These are saved in the Shibori database — Piyush publishes them to the store.</div>
     <div id="list"><div class="empty">Loading…</div></div>
   </div>
 </div>
 
 <div class="foot">Shibori Ethnic Studio · internal product intake</div>
+
+<!-- Bulk view modal -->
+<div class="bmodal" id="bulk">
+  <div class="bmodal-card">
+    <div class="bmodal-head">
+      <h2>All uploaded <span class="pill" id="bulkCount">0</span></h2>
+      <input id="bulkSearch" type="text" placeholder="Search title or category…">
+      <button class="vbtn" id="bulkRefresh" type="button">↻ Refresh</button>
+      <button class="vbtn" id="bulkClose" type="button">✕ Close</button>
+    </div>
+    <div class="bmodal-body"><div class="bulk-grid" id="bulkGrid"></div></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -139,7 +191,7 @@ function toast(m,err){const t=$('#toast');t.textContent=m;t.className='toast sho
 function slug(s){return (s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'product');}
 function safe(n){return n.replace(/[^a-zA-Z0-9.]+/g,'-');}
 
-$('#sizes').addEventListener('click',e=>{const l=e.target.closest('label');if(!l)return;setTimeout(()=>l.classList.toggle('on',l.querySelector('input').checked),0);});
+$('#sizes').addEventListener('change',e=>{const cb=e.target.closest('input[type=checkbox]');if(!cb)return;const sq=cb.closest('.sq');sq.classList.toggle('off',!cb.checked);sq.querySelector('.q').disabled=!cb.checked;});
 
 const imgDrop=$('#imgDrop'),imgInput=$('#imgInput'),imgThumbs=$('#imgThumbs');
 imgDrop.onclick=()=>imgInput.click();
@@ -176,17 +228,21 @@ $('#pform').addEventListener('submit',async e=>{
     for(let i=0;i<imgs.length;i++){const ext=(imgs[i].name.split('.').pop()||'jpg').toLowerCase();urls.push(await uploadFile(imgs[i],`${base}/${i+1}-${safe(imgs[i].name)}`));done++;fill.style.width=(done/total*90+5)+'%';}
     let vurl=null;
     if(vid){vurl=await uploadFile(vid,`${base}/video-${safe(vid.name)}`);done++;fill.style.width=(done/total*90+5)+'%';}
+    const stock={},sizesArr=[];
+    $$('#sizes .sq').forEach(sq=>{const cb=sq.querySelector('input[type=checkbox]');if(cb.checked){sizesArr.push(cb.value);stock[cb.value]=parseInt(sq.querySelector('.q').value||'0',10);}});
     const {error}=await sb.from('products').insert({
       title:$('#title').value.trim(),category:$('#category').value,status:$('#status').value,
       price:Number($('#price').value),compare_at:$('#compare').value?Number($('#compare').value):null,
-      sizes:$$('#sizes input:checked').map(i=>i.value).join(','),colors:$('#colors').value.trim(),
-      fabric:$('#fabric').value.trim(),care:$('#care').value.trim(),description:$('#desc').value.trim(),
-      image_urls:urls,video_url:vurl
+      sku:$('#sku').value.trim()||null,weight_grams:$('#weight').value?Number($('#weight').value):null,
+      sizes:sizesArr.join(','),stock:stock,colors:$('#colors').value.trim(),
+      fabric:$('#fabric').value.trim(),care:$('#care').value.trim(),tags:$('#tags').value.trim(),
+      description:$('#desc').value.trim(),image_urls:urls,video_url:vurl
     });
     if(error) throw error;
     fill.style.width='100%';
     toast('✓ Saved to database');
-    imgs=[];vid=null;renderImgs();renderVid();e.target.reset();$$('#sizes label').forEach(l=>l.classList.add('on'));$$('#sizes input').forEach(i=>i.checked=true);
+    imgs=[];vid=null;renderImgs();renderVid();e.target.reset();
+    $$('#sizes .sq').forEach(sq=>{sq.classList.remove('off');sq.querySelector('.q').disabled=false;});
     loadList();$('#title').focus();
   }catch(err){toast('Error: '+(err.message||err),1);}
   finally{btn.disabled=false;btn.textContent='Save product';setTimeout(()=>{bar.classList.remove('show');fill.style.width='0';},600);}
@@ -200,6 +256,35 @@ async function loadList(){
   $('#list').innerHTML=data.map(p=>{const img=(p.image_urls&&p.image_urls[0])||'';return `<div class="item"><img src="${img}" onerror="this.style.opacity=.2"><div><div class="t">${p.title||''}</div><div class="m">${p.category||''} · ₹${p.price||''}</div></div></div>`;}).join('');
 }
 loadList();
+
+/* ---------- Bulk view ---------- */
+const bulk=$('#bulk');let bulkData=[];
+async function openBulk(){
+  bulk.classList.add('open');document.body.style.overflow='hidden';
+  $('#bulkGrid').innerHTML='<div class="bempty">Loading…</div>';
+  const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
+  if(error){$('#bulkGrid').innerHTML='<div class="bempty">Could not load.</div>';return;}
+  bulkData=data||[];$('#bulkCount').textContent=bulkData.length;$('#bulkSearch').value='';renderBulk(bulkData);
+}
+function closeBulk(){bulk.classList.remove('open');document.body.style.overflow='';}
+function renderBulk(rows){
+  if(!rows.length){$('#bulkGrid').innerHTML='<div class="bempty">No products found.</div>';return;}
+  $('#bulkGrid').innerHTML=rows.map(p=>{
+    const im=(p.image_urls&&p.image_urls[0])||'', n=(p.image_urls||[]).length, st=(p.status||'').toLowerCase();
+    const tot=p.stock?Object.values(p.stock).reduce((a,b)=>a+(+b||0),0):null;
+    return `<div class="bcard"><div class="ph">${im?`<img src="${im}" onerror="this.style.opacity=.15">`:''}${p.video_url?'<span class="vtag2">▶ video</span>':''}${n>1?`<span class="cnt">${n} photos</span>`:''}</div>
+      <div class="b"><div class="ct">${p.category||''}</div><h4>${p.title||''}</h4>
+      <div class="pr">₹${p.price||''}${p.compare_at?` <s>₹${p.compare_at}</s>`:''}</div>
+      <div class="mt">${p.sizes||'—'}${p.colors?' · '+p.colors:''}${tot!=null?' · '+tot+' in stock':''}</div>
+      <span class="st ${st}">${p.status||''}</span></div></div>`;
+  }).join('');
+}
+$('#bulkBtn').onclick=openBulk;
+$('#bulkRefresh').onclick=openBulk;
+$('#bulkClose').onclick=closeBulk;
+bulk.onclick=e=>{if(e.target===bulk)closeBulk();};
+$('#bulkSearch').oninput=e=>{const q=e.target.value.toLowerCase();renderBulk(bulkData.filter(p=>(p.title||'').toLowerCase().includes(q)||(p.category||'').toLowerCase().includes(q)));};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&bulk.classList.contains('open'))closeBulk();});
 </script>
 </body>
 </html>
