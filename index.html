@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shibori — Product Upload Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--charcoal:#141210;--gold:#e8b53a;--gold-deep:#c8741f;--ivory:#f7f3ea;--cream:#efe8d8;--ok:#2e8b57;--err:#d9534f;
+--grad:linear-gradient(100deg,#f0cd7a,#e8b53a 45%,#c8741f);--font-d:"Cormorant Garamond",serif;--font-b:"Inter",sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-b);background:var(--ivory);color:#222;line-height:1.5}
+.top{background:var(--charcoal);color:var(--ivory);padding:18px 0;border-bottom:1px solid rgba(232,181,58,.25)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.brand{font-family:var(--font-d);font-style:italic;font-weight:700;font-size:1.7rem;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+.brand small{display:block;font-family:var(--font-b);font-style:normal;font-size:.55rem;letter-spacing:.4em;color:var(--ivory);margin-top:2px}
+.top p{font-size:.85rem;color:rgba(247,243,234,.7);margin-top:8px}
+.layout{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;padding:28px 0}
+.card{background:#fff;border:1px solid rgba(232,181,58,.35);border-radius:14px;padding:22px;box-shadow:0 8px 30px rgba(20,18,16,.05)}
+h2{font-family:var(--font-d);font-size:1.5rem;margin-bottom:4px}
+.sub{font-size:.82rem;color:#888;margin-bottom:18px}
+label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600;color:#555;margin:14px 0 6px}
+label .req{color:var(--err)}
+input[type=text],input[type=number],select,textarea{width:100%;padding:11px 13px;border:1.5px solid #e2dccb;border-radius:9px;font-family:inherit;font-size:.92rem;background:#fffdf8}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+textarea{min-height:78px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sizes{display:flex;flex-wrap:wrap;gap:8px}
+.sizes label{display:inline-flex;align-items:center;gap:6px;margin:0;padding:8px 14px;border:1.5px solid #e2dccb;border-radius:99px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.85rem;color:#222;background:#fffdf8}
+.sizes input{display:none}
+.sizes label.on{background:var(--charcoal);color:var(--ivory);border-color:var(--charcoal)}
+.drop{border:2px dashed #d8cfb6;border-radius:11px;padding:18px;text-align:center;cursor:pointer;background:#fffdf8;transition:.2s;font-size:.85rem;color:#777}
+.drop:hover,.drop.drag{border-color:var(--gold);background:#fdf8ec}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.thumb{position:relative;width:62px;height:80px;border-radius:7px;overflow:hidden;border:1px solid #e2dccb}
+.thumb img,.thumb video{width:100%;height:100%;object-fit:cover}
+.thumb b{position:absolute;top:2px;right:2px;background:var(--err);color:#fff;width:16px;height:16px;border-radius:50%;font-size:.7rem;display:grid;place-items:center;cursor:pointer;line-height:1}
+.thumb .vtag{position:absolute;bottom:2px;left:2px;background:rgba(0,0,0,.6);color:#fff;font-size:.55rem;padding:1px 4px;border-radius:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border:none;border-radius:99px;font-weight:700;font-size:.9rem;cursor:pointer;transition:.25s}
+.btn-primary{background:var(--grad);color:#1a1310;width:100%;margin-top:20px}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(200,116,31,.3)}
+.btn-primary:disabled{opacity:.55;cursor:wait;transform:none;box-shadow:none}
+.list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.pill{background:var(--grad);color:#1a1310;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:99px}
+.item{display:grid;grid-template-columns:54px 1fr;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #efe8d8}
+.item img{width:54px;height:70px;object-fit:cover;border-radius:7px;background:var(--cream)}
+.item .t{font-weight:600;font-size:.92rem}
+.item .m{font-size:.76rem;color:#888}
+.empty{text-align:center;padding:36px 12px;color:#aaa;font-size:.88rem}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,140%);background:var(--charcoal);color:var(--ivory);padding:13px 24px;border-radius:99px;font-size:.88rem;transition:.4s;z-index:50;box-shadow:0 12px 30px rgba(0,0,0,.3);max-width:90vw}
+.toast.show{transform:translate(-50%,0)}
+.toast.err{background:var(--err)}
+.hint{font-size:.72rem;color:#999;margin-top:5px}
+.bar{height:6px;border-radius:99px;background:#efe8d8;overflow:hidden;margin-top:10px;display:none}
+.bar.show{display:block}
+.bar i{display:block;height:100%;width:0;background:var(--grad);transition:width .2s}
+.foot{text-align:center;font-size:.75rem;color:#aaa;padding:24px}
+@media(max-width:820px){.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top"><div class="wrap">
+  <div class="brand">Shibori<small>ETHNIC STUDIO</small></div>
+  <p>Product Upload Dashboard — add each kurti's details + photos &amp; video. Everything saves automatically.</p>
+</div></div>
+
+<div class="wrap layout">
+  <!-- FORM -->
+  <div class="card">
+    <h2>Add a product</h2>
+    <div class="sub">Fill the details and attach images (first = main) + an optional video, then click Save.</div>
+    <form id="pform">
+      <label>Product title <span class="req">*</span></label>
+      <input type="text" id="title" required placeholder="e.g. Indigo Shibori A-Line Kurti">
+      <div class="row">
+        <div>
+          <label>Category <span class="req">*</span></label>
+          <select id="category" required>
+            <option value="">Select…</option>
+            <option>Casual</option><option>Festive</option><option>Office Wear</option><option>Anarkali</option><option>Co-ord Set</option><option>Dupatta Set</option>
+          </select>
+        </div>
+        <div><label>Status</label><select id="status"><option>Active</option><option>Draft</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>Price ₹ <span class="req">*</span></label><input type="number" id="price" required min="0" placeholder="1899"></div>
+        <div><label>Compare-at ₹ (original)</label><input type="number" id="compare" min="0" placeholder="blank if no discount"></div>
+      </div>
+      <label>Sizes available</label>
+      <div class="sizes" id="sizes">
+        <label class="on"><input type="checkbox" value="XS" checked>XS</label>
+        <label class="on"><input type="checkbox" value="S" checked>S</label>
+        <label class="on"><input type="checkbox" value="M" checked>M</label>
+        <label class="on"><input type="checkbox" value="L" checked>L</label>
+        <label class="on"><input type="checkbox" value="XL" checked>XL</label>
+        <label class="on"><input type="checkbox" value="XXL" checked>XXL</label>
+      </div>
+      <div class="row">
+        <div><label>Colour(s)</label><input type="text" id="colors" placeholder="e.g. Indigo or Indigo, Maroon"></div>
+        <div><label>Fabric</label><input type="text" id="fabric" placeholder="e.g. 100% cotton"></div>
+      </div>
+      <label>Care instructions</label>
+      <input type="text" id="care" placeholder="e.g. Hand wash cold, do not bleach">
+      <label>Description</label>
+      <textarea id="desc" placeholder="A line or two about the kurti…"></textarea>
+      <label>Photos <span class="req">*</span> <span class="hint" style="display:inline">(first image = main)</span></label>
+      <div class="drop" id="imgDrop">📷 Click or drop images here (JPG/PNG)</div>
+      <input type="file" id="imgInput" accept="image/*" multiple hidden>
+      <div class="thumbs" id="imgThumbs"></div>
+      <label>Video (optional)</label>
+      <div class="drop" id="vidDrop">🎬 Click or drop a video here (MP4)</div>
+      <input type="file" id="vidInput" accept="video/*" hidden>
+      <div class="thumbs" id="vidThumbs"></div>
+      <div class="bar" id="bar"><i></i></div>
+      <button type="submit" class="btn btn-primary" id="saveBtn">Save product</button>
+    </form>
+  </div>
+
+  <!-- LIST -->
+  <div class="card">
+    <div class="list-head"><h2>Saved products</h2><span class="pill" id="count">0</span></div>
+    <div class="sub">These are saved in the Shibori database — Piyush publishes them to the store.</div>
+    <div id="list"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<div class="foot">Shibori Ethnic Studio · internal product intake</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL='https://pemslcyrbyapcicaekfp.supabase.co';
+const SB_KEY='sb_publishable_040icaFvG5aghhLCW9aNpQ_SB5lTk5t';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let imgs=[],vid=null;
+
+function toast(m,err){const t=$('#toast');t.textContent=m;t.className='toast show'+(err?' err':'');clearTimeout(t._);t._=setTimeout(()=>t.className='toast',err?5000:2600);}
+function slug(s){return (s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'product');}
+function safe(n){return n.replace(/[^a-zA-Z0-9.]+/g,'-');}
+
+$('#sizes').addEventListener('click',e=>{const l=e.target.closest('label');if(!l)return;setTimeout(()=>l.classList.toggle('on',l.querySelector('input').checked),0);});
+
+const imgDrop=$('#imgDrop'),imgInput=$('#imgInput'),imgThumbs=$('#imgThumbs');
+imgDrop.onclick=()=>imgInput.click();
+imgInput.onchange=()=>{[...imgInput.files].forEach(f=>imgs.push(f));imgInput.value='';renderImgs();};
+['dragover','dragleave','drop'].forEach(ev=>imgDrop.addEventListener(ev,e=>{e.preventDefault();imgDrop.classList.toggle('drag',ev==='dragover');if(ev==='drop')[...e.dataTransfer.files].filter(f=>f.type.startsWith('image')).forEach(f=>imgs.push(f)),renderImgs();}));
+function renderImgs(){imgThumbs.innerHTML=imgs.map((f,i)=>`<div class="thumb"><img src="${URL.createObjectURL(f)}"><b data-ri="${i}">×</b></div>`).join('');}
+imgThumbs.onclick=e=>{const b=e.target.closest('[data-ri]');if(b){imgs.splice(+b.dataset.ri,1);renderImgs();}};
+
+const vidDrop=$('#vidDrop'),vidInput=$('#vidInput'),vidThumbs=$('#vidThumbs');
+vidDrop.onclick=()=>vidInput.click();
+vidInput.onchange=()=>{if(vidInput.files[0]){vid=vidInput.files[0];renderVid();}};
+['dragover','dragleave','drop'].forEach(ev=>vidDrop.addEventListener(ev,e=>{e.preventDefault();vidDrop.classList.toggle('drag',ev==='dragover');if(ev==='drop'&&e.dataTransfer.files[0]&&e.dataTransfer.files[0].type.startsWith('video')){vid=e.dataTransfer.files[0];renderVid();}}));
+function renderVid(){vidThumbs.innerHTML=vid?`<div class="thumb"><video src="${URL.createObjectURL(vid)}"></video><span class="vtag">VIDEO</span><b data-rv>×</b></div>`:'';}
+vidThumbs.onclick=e=>{if(e.target.closest('[data-rv]')){vid=null;renderVid();}};
+
+async function uploadFile(file,path){
+  const {error}=await sb.storage.from('product-media').upload(path,file,{upsert:false,contentType:file.type});
+  if(error) throw error;
+  return sb.storage.from('product-media').getPublicUrl(path).data.publicUrl;
+}
+
+$('#pform').addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!$('#title').value.trim())return toast('Enter a title',1);
+  if(!$('#category').value)return toast('Pick a category',1);
+  if(!$('#price').value)return toast('Enter a price',1);
+  if(!imgs.length)return toast('Add at least one photo',1);
+  const btn=$('#saveBtn'),bar=$('#bar'),fill=bar.querySelector('i');
+  btn.disabled=true;btn.textContent='Saving…';bar.classList.add('show');fill.style.width='5%';
+  try{
+    const base=slug($('#title').value)+'-'+Date.now().toString(36);
+    const total=imgs.length+(vid?1:0);let done=0;
+    const urls=[];
+    for(let i=0;i<imgs.length;i++){const ext=(imgs[i].name.split('.').pop()||'jpg').toLowerCase();urls.push(await uploadFile(imgs[i],`${base}/${i+1}-${safe(imgs[i].name)}`));done++;fill.style.width=(done/total*90+5)+'%';}
+    let vurl=null;
+    if(vid){vurl=await uploadFile(vid,`${base}/video-${safe(vid.name)}`);done++;fill.style.width=(done/total*90+5)+'%';}
+    const {error}=await sb.from('products').insert({
+      title:$('#title').value.trim(),category:$('#category').value,status:$('#status').value,
+      price:Number($('#price').value),compare_at:$('#compare').value?Number($('#compare').value):null,
+      sizes:$$('#sizes input:checked').map(i=>i.value).join(','),colors:$('#colors').value.trim(),
+      fabric:$('#fabric').value.trim(),care:$('#care').value.trim(),description:$('#desc').value.trim(),
+      image_urls:urls,video_url:vurl
+    });
+    if(error) throw error;
+    fill.style.width='100%';
+    toast('✓ Saved to database');
+    imgs=[];vid=null;renderImgs();renderVid();e.target.reset();$$('#sizes label').forEach(l=>l.classList.add('on'));$$('#sizes input').forEach(i=>i.checked=true);
+    loadList();$('#title').focus();
+  }catch(err){toast('Error: '+(err.message||err),1);}
+  finally{btn.disabled=false;btn.textContent='Save product';setTimeout(()=>{bar.classList.remove('show');fill.style.width='0';},600);}
+});
+
+async function loadList(){
+  const {data,error}=await sb.from('products').select('id,title,category,price,image_urls').order('created_at',{ascending:false});
+  if(error){$('#list').innerHTML='<div class="empty">Could not load. Run the setup SQL first.</div>';return;}
+  $('#count').textContent=data.length;
+  if(!data.length){$('#list').innerHTML='<div class="empty">No products yet — add your first on the left.</div>';return;}
+  $('#list').innerHTML=data.map(p=>{const img=(p.image_urls&&p.image_urls[0])||'';return `<div class="item"><img src="${img}" onerror="this.style.opacity=.2"><div><div class="t">${p.title||''}</div><div class="m">${p.category||''} · ₹${p.price||''}</div></div></div>`;}).join('');
+}
+loadList();
+</script>
+</body>
+</html>
